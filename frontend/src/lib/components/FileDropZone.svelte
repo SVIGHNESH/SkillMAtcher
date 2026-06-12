@@ -1,14 +1,12 @@
 <script lang="ts">
 	let {
-		label = 'Drop file here',
+		label = 'DATA_DISK.TXT',
 		accept = '.txt,.pdf,.docx',
-		icon = '[]',
 		onFile,
 		style = ''
 	}: {
 		label?: string;
 		accept?: string;
-		icon?: string;
 		onFile: (file: File) => void;
 		style?: string;
 	} = $props();
@@ -68,17 +66,86 @@
 		onchange={handleFilePick}
 	/>
 
-	{#if file}
-		<div class="drop-zone-icon" style="font-size:1.4rem; margin-bottom:0.5rem;">{icon}</div>
-		<div class="drop-zone-filename">{file.name}</div>
-		<div class="status-line" style="font-size:0.68rem; margin-top:0.35rem;">
-			<span class="success-text">loaded</span> &mdash; {(file.size / 1024).toFixed(1)} KB
-		</div>
-		<div class="drop-zone-sub">drop to replace</div>
-	{:else}
-		<div class="drop-zone-icon">{icon}</div>
-		<div class="drop-zone-label">{label}</div>
-		<div class="drop-zone-sub">drag &amp; drop &bull; click to browse</div>
-		<div class="drop-zone-sub" style="margin-top:0.15rem;">.txt &bull; .pdf &bull; .docx</div>
-	{/if}
+	<div class="bracket-tl"></div><div class="bracket-tr"></div>
+	<div class="bracket-bl"></div><div class="bracket-br"></div>
+
+	<div class="inner-content">
+		{#if file}
+			<div><span class="prompt"></span> {label}</div>
+			<div class="file-name">> {file.name.toUpperCase()}</div>
+			<div class="text-dim">  SIZE: {(file.size / 1024).toFixed(1)} KB</div>
+			<div class="text-dim">  STATUS: LOADED [OK]</div>
+			<br/>
+			<div class="text-dim">  [ CLICK TO REPLACE ]</div>
+		{:else}
+			<div><span class="prompt"></span> {label}</div>
+			<div class="text-dim">  STATUS: AWAITING INPUT...</div>
+			<div class="text-dim">  FORMATS: TXT, PDF, DOCX</div>
+			<br/>
+			<div class="blink-text">  [ CLICK OR DRAG TO INSERT ]</div>
+		{/if}
+	</div>
 </div>
+
+<style>
+	.drop-zone {
+		position: relative;
+		padding: 24px;
+		cursor: pointer;
+		min-height: 180px;
+		background: rgba(0, 0, 0, 0.4);
+		transition: background 0.2s;
+	}
+
+	.drop-zone:hover, .drop-zone.drag-over {
+		background: rgba(57, 255, 20, 0.1);
+	}
+
+	.drop-zone.has-file {
+		background: rgba(0, 0, 0, 0.8);
+	}
+
+	.hidden {
+		display: none;
+	}
+
+	.inner-content {
+		position: relative;
+		z-index: 2;
+	}
+
+	.file-name {
+		color: var(--phosphor-primary);
+		text-shadow: 0 0 8px var(--phosphor-primary);
+	}
+
+	.blink-text {
+		animation: blink 2s step-end infinite;
+	}
+
+	/* Corner Brackets */
+	.bracket-tl, .bracket-tr, .bracket-bl, .bracket-br {
+		position: absolute;
+		width: 16px;
+		height: 16px;
+		border-color: var(--phosphor-dim);
+		border-style: solid;
+		transition: border-color 0.2s;
+	}
+
+	.drop-zone:hover .bracket-tl,
+	.drop-zone:hover .bracket-tr,
+	.drop-zone:hover .bracket-bl,
+	.drop-zone:hover .bracket-br,
+	.drop-zone.has-file .bracket-tl,
+	.drop-zone.has-file .bracket-tr,
+	.drop-zone.has-file .bracket-bl,
+	.drop-zone.has-file .bracket-br {
+		border-color: var(--phosphor-primary);
+	}
+
+	.bracket-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
+	.bracket-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
+	.bracket-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
+	.bracket-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+</style>

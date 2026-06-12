@@ -18,15 +18,18 @@ from .schemas import (
     MatchResponse,
 )
 
+import os
+
 app = FastAPI(title="SkillMatcher API", version="0.1.0")
+
+# Allow dynamic CORS from environment or default to local/all
+allowed_origins = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://127.0.0.1:5173,http://localhost:4173").split(",")
+if "*" in allowed_origins:
+    allowed_origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:4173",
-    ],
+    allow_origins=allowed_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

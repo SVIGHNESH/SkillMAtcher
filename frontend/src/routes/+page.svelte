@@ -13,10 +13,11 @@
 	const canSubmit = $derived(jdFile !== null && resumeFile !== null && !loading);
 
 	const progressMessages = [
-		'reading documents...',
-		'extracting skills via LLM...',
-		'comparing skill sets...',
-		'generating report...'
+		'INITIALIZING SCANNER...',
+		'LOADING PERSONALITY MATRIX...',
+		'EXTRACTING SKILL VECTORS...',
+		'COMPARING DATA SETS...',
+		'GENERATING OVERSEER REPORT...'
 	];
 
 	async function handleMatch() {
@@ -35,7 +36,7 @@
 		try {
 			result = await matchSkills(jdFile, resumeFile);
 		} catch (e: unknown) {
-			error = e instanceof Error ? e.message : 'Unknown error';
+			error = e instanceof Error ? e.message : 'UNKNOWN SYSTEM ERROR';
 		} finally {
 			clearInterval(interval);
 			progressStep = progressMessages.length;
@@ -50,93 +51,67 @@
 		error = null;
 		progressStep = 0;
 	}
-
-	const fileIcon = $derived.by(() => {
-		if (jdFile) {
-			const ext = jdFile.name.split('.').pop()?.toLowerCase();
-			return `[${ext}]`;
-		}
-		return '[/]';
-	});
 </script>
 
-<div class="page-content">
-	<section class="hero animate-in">
-		<h1 class="hero-title">
-			<span class="hero-prefix">//</span>
-			skill<br class="mobile-break" />matcher
-		</h1>
-		<p class="hero-sub">ai-powered resume &bull; job description analyzer</p>
-	</section>
+<div class="terminal-container">
+	<header class="terminal-header animate-in">
+		<div class="text-dim">ROBCO INDUSTRIES UNIFIED OPERATING SYSTEM</div>
+		<div class="text-dim">COPYRIGHT 2075-2077 ROBCO INDUSTRIES</div>
+		<br/>
+		<h1>> SKILLMATCHER_</h1>
+		<div>VAULT-TEC AUTOMATED RESEARCH TERMINAL</div>
+		<div>STATUS: <span class="text-warning">OPERATIONAL</span></div>
+		<div>=============================================</div>
+	</header>
 
 	{#if !result}
 		<section class="upload-section animate-in" style="animation-delay: 0.1s;">
-			<div class="prompt" style="margin-bottom: 0.75rem;">upload files</div>
+			<div class="prompt" style="margin-bottom: 1rem;">PLEASE INSERT DATA DISKS:</div>
+			
 			<div class="upload-grid">
-				<div class="upload-col">
-					<div class="status-line" style="margin-bottom:0.5rem; color:var(--text-muted);">
-						<span class="highlight">JD</span> job description
-					</div>
-					<FileDropZone
-						label="Job Description"
-						icon={jdFile ? fileIcon : '[JD]'}
-						onFile={(f) => { jdFile = f; error = null; }}
-					/>
-				</div>
-				<div class="upload-col">
-					<div class="status-line" style="margin-bottom:0.5rem; color:var(--text-muted);">
-						<span class="highlight">RS</span> resume / cv
-					</div>
-					<FileDropZone
-						label="Resume"
-						icon="[RS]"
-						onFile={(f) => { resumeFile = f; error = null; }}
-					/>
-				</div>
+				<FileDropZone
+					label="JOB_DESCRIPTION.TXT"
+					onFile={(f) => { jdFile = f; error = null; }}
+				/>
+				<FileDropZone
+					label="PERSONNEL_RECORD.TXT"
+					onFile={(f) => { resumeFile = f; error = null; }}
+				/>
+			</div>
+			<div class="action-row">
+				<button onclick={handleMatch} disabled={!canSubmit} class="btn-primary">
+					[ EXECUTE MATCH ]
+				</button>
 			</div>
 		</section>
 
-		<section class="action-section animate-in" style="animation-delay: 0.2s;">
-			<button
-				onclick={handleMatch}
-				disabled={!canSubmit}
-				class="btn-primary execute-btn"
-			>
-				{loading ? 'processing' : 'execute match'}
-				<span class="btn-arrow">{loading ? '...' : '>>'}</span>
-			</button>
-		</section>
-
 		{#if loading}
-			<section class="progress-section animate-in-fast">
-				<div class="card" style="padding:1rem 1.5rem;">
+			<section class="progress-section animate-in" style="margin-top: 2rem;">
+				<div class="box-border">
 					{#each progressMessages as msg, i}
-						<div class="status-line" style="opacity: {i <= progressStep ? 1 : 0.25}; transition: opacity 0.4s;">
-							<span class="highlight" style="color:{i <= progressStep ? 'var(--accent)' : 'var(--text-dim)'}">
-								{i < progressStep ? '>>' : '>'}
-							</span>
-							{msg}
+						<div style="opacity: {i <= progressStep ? 1 : 0.2};">
+							<span class="prompt"></span> {msg}
 							{#if i === progressStep && i < progressMessages.length - 1}
-								<span style="color:var(--accent); animation: cursorBlink 0.8s step-end infinite;">_</span>
+								<span class="cursor-blink"></span>
 							{/if}
 							{#if i < progressStep}
-								<span class="success-text" style="margin-left:0.5rem;">[ok]</span>
+								<span class="text-dim"> [OK]</span>
 							{/if}
 						</div>
 					{/each}
-					<div class="progress-bar" style="margin-top:1rem;"></div>
 				</div>
 			</section>
 		{/if}
 
 		{#if error}
-			<section class="error-section animate-in-fast">
-				<div class="card" style="border-color: var(--error-glow);">
-					<div class="status-line">
-						<span class="error-text">[!] error:</span> {error}
+			<section class="error-section animate-in" style="margin-top: 2rem;">
+				<div class="box-border" style="border-color: var(--phosphor-error);">
+					<div class="text-error">
+						<span class="prompt"></span> FATAL EXCEPTION: {error}
 					</div>
-					<button onclick={() => error = null} class="btn-secondary" style="margin-top:0.75rem;">
-						dismiss
+					<br/>
+					<button onclick={() => error = null} class="btn-secondary">
+						[ ACKNOWLEDGE ]
 					</button>
 				</div>
 			</section>
@@ -144,7 +119,7 @@
 	{/if}
 
 	{#if result}
-		<section class="result-section animate-in" style="animation-delay: 0.15s;">
+		<section class="result-section animate-in" style="animation-delay: 0.1s;">
 			<ResultsCard
 				matched={result.matched}
 				missing={result.missing}
@@ -157,102 +132,33 @@
 </div>
 
 <style>
-	.page-content {
-		display: flex;
-		flex-direction: column;
-		gap: 2rem;
+	.terminal-container {
+		max-width: 900px;
+		margin: 0 auto;
+		padding: 2rem;
+		position: relative;
+		z-index: 10;
 	}
 
-	.hero {
-		text-align: center;
-		padding: 0.5rem 0 0.5rem;
-	}
-
-	.hero-title {
-		font-family: var(--font-heading);
-		font-size: 3.2rem;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		line-height: 1.1;
-		text-transform: lowercase;
-		color: var(--text-primary);
-	}
-
-	.hero-prefix {
-		color: var(--accent);
-		opacity: 0.5;
-		margin-right: 0.25rem;
-		font-weight: 400;
-	}
-
-	.hero-sub {
-		font-family: var(--font-mono);
-		font-size: 0.78rem;
-		color: var(--text-muted);
-		margin-top: 0.6rem;
-		letter-spacing: 0.05em;
-	}
-
-	.mobile-break {
-		display: none;
-	}
-
-	.upload-section {
-		width: 100%;
+	.terminal-header {
+		margin-bottom: 2rem;
 	}
 
 	.upload-grid {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 1.25rem;
+		gap: 2rem;
+		margin-bottom: 2rem;
 	}
 
-	.upload-col {
+	.action-row {
 		display: flex;
-		flex-direction: column;
+		justify-content: flex-start;
 	}
 
-	.action-section {
-		display: flex;
-		justify-content: center;
-	}
-
-	.execute-btn {
-		padding: 1rem 3rem;
-		font-size: 1.05rem;
-	}
-
-	.btn-arrow {
-		font-family: var(--font-mono);
-		font-size: 0.85rem;
-		opacity: 0.7;
-	}
-
-	.progress-section {
-		max-width: 600px;
-		margin: 0 auto;
-		width: 100%;
-	}
-
-	.error-section {
-		max-width: 600px;
-		margin: 0 auto;
-		width: 100%;
-	}
-
-	.result-section {
-		width: 100%;
-	}
-
-	@media (max-width: 700px) {
+	@media (max-width: 768px) {
 		.upload-grid {
 			grid-template-columns: 1fr;
-		}
-		.hero-title {
-			font-size: 2.2rem;
-		}
-		.mobile-break {
-			display: inline;
 		}
 	}
 </style>
