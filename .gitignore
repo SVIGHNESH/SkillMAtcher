@@ -1,5 +1,25 @@
+# Python
 .venv/
-.env
-output/
 __pycache__/
 *.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# Application data
+output/
+data/
+
+# Frontend
+frontend/node_modules/
+frontend/.svelte-kit/
+frontend/build/
+frontend/.svelte-kit/
+
+# OS
+.DS_Store
+Thumbs.db
