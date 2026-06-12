@@ -1,0 +1,27 @@
+services:
+  # Python backend (FastAPI)
+  - type: web
+    name: skillmatcher-api
+    runtime: python
+    buildCommand: pip install uv && uv sync
+    startCommand: uv run uvicorn api.app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: LLM_API_KEY
+        sync: false          # set this in the Render dashboard
+      - key: LLM_MODEL
+        value: llama-3.3-70b-versatile
+      - key: LLM_BASE_URL
+        value: https://api.groq.com/openai/v1
+      - key: CORS_ORIGINS
+        sync: false          # set to your frontend URL after first deploy
+
+  # SvelteKit frontend (Node SSR)
+  - type: web
+    name: skillmatcher-ui
+    runtime: node
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    startCommand: node build
+    envVars:
+      - key: VITE_API_BASE
+        sync: false          # set to your backend URL after first deploy
