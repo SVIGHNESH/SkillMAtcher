@@ -5,6 +5,18 @@ class HealthResponse(BaseModel):
     status: str
 
 
+class Recommendation(BaseModel):
+    skill: str
+    why_it_matters: str = ""
+    how_to_learn: str = ""
+
+
+class GapAnalysis(BaseModel):
+    verdict: str = ""
+    summary: str = ""
+    recommendations: list[Recommendation] = []
+
+
 class MatchResponse(BaseModel):
     status: str
     match_id: int | None = None
@@ -16,6 +28,16 @@ class MatchResponse(BaseModel):
     total_resume_skills: int = 0
     match_rate: float = 0.0
     report_url: str | None = None
+    # category -> {"matched": [...], "missing": [...]} for the breakdown chart
+    categories: dict = {}
+    analysis: GapAnalysis = GapAnalysis()
+
+
+class BatchMatchResponse(BaseModel):
+    status: str
+    job_description: str
+    # Ranked by match_rate descending.
+    items: list[MatchResponse] = []
 
 
 class ErrorResponse(BaseModel):
@@ -33,6 +55,8 @@ class HistoryItem(BaseModel):
     total_resume: int
     match_rate: float
     report_filename: str
+    categories: dict = {}
+    recommendations: dict = {}
     created_at: str
 
 

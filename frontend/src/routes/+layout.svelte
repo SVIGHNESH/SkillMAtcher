@@ -1,157 +1,188 @@
 <script lang="ts">
 	import '../app.css';
+	import { page } from '$app/stores';
 
 	let { children } = $props();
+
+	let theme = $state<'light' | 'dark'>('light');
+	let isScrolled = $state(false);
+
+	$effect(() => {
+		const current = document.documentElement.getAttribute('data-theme');
+		theme = current === 'dark' ? 'dark' : 'light';
+	});
+
+	$effect(() => {
+		function handleScroll() {
+			isScrolled = window.scrollY > 0;
+		}
+
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		return () => window.removeEventListener('scroll', handleScroll);
+	});
+
+	function toggleTheme() {
+		theme = theme === 'dark' ? 'light' : 'dark';
+		document.documentElement.setAttribute('data-theme', theme);
+		try {
+			localStorage.setItem('signal-theme', theme);
+		} catch (e) {
+			/* ignore */
+		}
+	}
+
+	const path = $derived($page.url.pathname);
 </script>
 
-<div class="app-shell">
-	<nav class="topbar">
+<div class="shell">
+	<header class="topbar" class:scrolled={isScrolled}>
 		<div class="topbar-inner">
-			<a href="/" class="logo">
-				<span class="logo-prompt">$</span>
-				<span class="logo-text">skillmatcher</span>
-				<span class="logo-cursor">_</span>
+			<a href="/" class="brand" aria-label="Signal home">
+				<span class="brand-mark" aria-hidden="true">
+					<svg viewBox="0 0 32 32" width="26" height="26">
+						<rect width="32" height="32" rx="8" fill="var(--accent)" />
+						<path
+							d="M9 17l4.5 4.5L23 11"
+							stroke="#fbfdfc"
+							stroke-width="3"
+							fill="none"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				</span>
+				<span class="brand-name">Signal</span>
 			</a>
-			<div class="topbar-links">
-				<a href="/" class="nav-link">match</a>
-				<a href="/history" class="nav-link">history</a>
-			</div>
-		</div>
-	</nav>
 
-	<main class="main-content">
+			<nav class="nav" aria-label="Primary">
+				<a href="/" class="nav-link" class:active={path === '/'}>Match</a>
+				<a href="/history" class="nav-link" class:active={path.startsWith('/history')}>History</a>
+			</nav>
+
+			<button class="theme-toggle" onclick={toggleTheme} aria-label="Toggle color theme">
+				{#if theme === 'dark'}
+					<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></svg>
+				{:else}
+					<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" /></svg>
+				{/if}
+			</button>
+		</div>
+	</header>
+
+	<main class="content">
 		{@render children()}
 	</main>
 
-	<div class="status-bar">
-		<span class="status-item">
-			<span class="status-dot"></span>
-			console v0.1
-		</span>
-		<span class="status-item">groq llm engine</span>
-		<span class="status-item">reports: ./output/</span>
-	</div>
+	<footer class="footer">
+		<span>Signal · AI skill-gap analysis</span>
+		<span class="dot" aria-hidden="true">·</span>
+		<span>Powered by Groq LLM</span>
+	</footer>
 </div>
 
 <style>
-	.app-shell {
-		position: relative;
-		z-index: 1;
+	.shell {
 		min-height: 100vh;
 		display: flex;
 		flex-direction: column;
 	}
 
 	.topbar {
-		border-bottom: 1px solid var(--border);
-		background: rgba(7, 8, 15, 0.85);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
 		position: sticky;
 		top: 0;
-		z-index: 10;
+		z-index: 20;
+		background: color-mix(in srgb, var(--paper) 82%, transparent);
+		backdrop-filter: blur(8px) saturate(1.3);
+		-webkit-backdrop-filter: blur(8px) saturate(1.3);
+		border-bottom: 1px solid transparent;
+		transition: backdrop-filter 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+	}
+
+	.topbar.scrolled {
+		background: color-mix(in srgb, var(--paper) 90%, transparent);
+		backdrop-filter: blur(16px) saturate(1.5);
+		-webkit-backdrop-filter: blur(16px) saturate(1.5);
+		border-bottom: 1px solid var(--line);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 	}
 
 	.topbar-inner {
-		max-width: 72rem;
+		max-width: 74rem;
 		margin: 0 auto;
 		padding: 0 1.5rem;
-		height: 52px;
+		height: 62px;
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		gap: 1rem;
 	}
 
-	.logo {
-		display: flex;
+	.brand {
+		display: inline-flex;
 		align-items: center;
-		gap: 0.3rem;
-		text-decoration: none;
-		font-family: var(--font-mono);
-		font-size: 0.95rem;
+		gap: 0.55rem;
+		color: var(--ink);
+	}
+	.brand-mark { display: inline-flex; filter: drop-shadow(0 2px 5px var(--accent-ring)); }
+	.brand-name {
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 1.25rem;
+		letter-spacing: -0.03em;
 	}
 
-	.logo-prompt {
-		color: var(--accent);
-		font-weight: 700;
-	}
-
-	.logo-text {
-		color: var(--text-primary);
-		font-weight: 500;
-		letter-spacing: 0.03em;
-	}
-
-	.logo-cursor {
-		color: var(--accent);
-		font-weight: 700;
-		animation: cursorBlink 1s step-end infinite;
-	}
-
-	.topbar-links {
+	.nav {
+		margin-left: auto;
 		display: flex;
 		gap: 0.25rem;
 	}
-
 	.nav-link {
-		padding: 0.4rem 0.9rem;
-		border-radius: 6px;
-		font-family: var(--font-heading);
-		font-size: 0.78rem;
-		font-weight: 500;
-		color: var(--text-muted);
-		text-decoration: none;
-		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		transition: all 0.2s;
+		padding: 0.45rem 0.95rem;
+		border-radius: 99px;
+		font-weight: 600;
+		font-size: 0.9rem;
+		color: var(--ink-mute);
+		transition: color 0.2s, background 0.2s;
 	}
+	.nav-link:hover { color: var(--ink); background: var(--card-hover); }
+	.nav-link.active { color: var(--accent); background: var(--accent-soft); }
 
-	.nav-link:hover {
-		color: var(--accent);
-		background: var(--accent-glow);
+	.theme-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 38px;
+		height: 38px;
+		border-radius: 99px;
+		border: 1px solid var(--line);
+		background: var(--card);
+		color: var(--ink-soft);
+		cursor: pointer;
+		transition: color 0.2s, border-color 0.2s, transform 0.2s;
 	}
+	.theme-toggle:hover { color: var(--accent); border-color: var(--accent); transform: rotate(-12deg); }
 
-	:global(.nav-link.active) {
-		color: var(--accent);
-		background: var(--accent-glow);
-	}
-
-	.main-content {
+	.content {
 		flex: 1;
 		width: 100%;
-		max-width: 72rem;
+		max-width: 74rem;
 		margin: 0 auto;
-		padding: 2.5rem 1.5rem;
+		padding: 3rem 1.5rem 4rem;
 	}
 
-	.status-bar {
-		border-top: 1px solid var(--border);
-		background: rgba(7, 8, 15, 0.9);
-		padding: 0.5rem 1.5rem;
+	.footer {
+		border-top: 1px solid var(--line);
+		padding: 1.25rem 1.5rem;
 		display: flex;
-		gap: 1.5rem;
-		font-size: 0.65rem;
-		font-family: var(--font-mono);
-		color: var(--text-dim);
+		gap: 0.6rem;
 		justify-content: center;
-		flex-wrap: wrap;
-	}
-
-	.status-item {
-		display: flex;
 		align-items: center;
-		gap: 0.4rem;
+		font-size: 0.82rem;
+		color: var(--ink-mute);
 	}
+	.dot { opacity: 0.5; }
 
-	.status-dot {
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		background: var(--success);
-		box-shadow: 0 0 6px var(--success);
-	}
-
-	@media (max-width: 640px) {
-		.main-content { padding: 1.5rem 1rem; }
+	@media (max-width: 600px) {
+		.content { padding: 2rem 1.1rem 3rem; }
+		.brand-name { font-size: 1.1rem; }
 	}
 </style>

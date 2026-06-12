@@ -1,0 +1,39 @@
+# SkillMatcher — full stack (API + UI). Run: docker compose up --build
+# Requires a .env file in this directory with at least LLM_API_KEY set.
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    ports:
+      - "8000:8000"
+    environment:
+      LLM_API_KEY: ${LLM_API_KEY:?set LLM_API_KEY in .env}
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_MODEL: ${LLM_MODEL:-llama-3.3-70b-versatile}
+      LLM_CACHE_ENABLED: ${LLM_CACHE_ENABLED:-true}
+      RATE_LIMIT: ${RATE_LIMIT:-}
+      # Allow the browser-facing UI origin through CORS.
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    volumes:
+      - skillmatcher-data:/app/data       # SQLite history + LLM cache
+      - skillmatcher-output:/app/output   # generated reports
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # IMPORTANT: this URL is used by the user's BROWSER, so it must be
+      # host-reachable — NOT the compose-internal http://api:8000.
+      PUBLIC_API_BASE: ${PUBLIC_API_BASE:-http://localhost:8000}
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  skillmatcher-data:
+  skillmatcher-output:

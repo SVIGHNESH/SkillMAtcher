@@ -5,7 +5,8 @@ import config
 from matcher import match_skills
 from output import write_report
 from parsers import read_document
-from skill_extractor import extract_skills
+from recommendations import analyze_gap
+from skill_extractor import extract_skills, skill_names
 
 logging.basicConfig(
     level=logging.WARNING,
@@ -64,17 +65,23 @@ def main() -> None:
         print(f"      Found {len(resume_skills)} skills.")
 
         print("  [*] Matching skills...")
-        matched, missing = match_skills(jd_skills, resume_skills)
+        matched, missing = match_skills(
+            skill_names(jd_skills), skill_names(resume_skills)
+        )
         total = len(matched) + len(missing)
         match_pct = (len(matched) / total * 100) if total > 0 else 0.0
 
         jd_name = jd_path.rsplit("/", 1)[-1]
         resume_name = resume_path.rsplit("/", 1)[-1]
+
+        print("  [*] Analysing skill gaps...")
+        analysis = analyze_gap(jd_name, matched, missing)
         report_path = write_report(
-            jd_name, resume_name, matched, missing, match_pct
+            jd_name, resume_name, matched, missing, match_pct, analysis
         )
 
         print()
+        print(f"  Verdict: {analysis.get('verdict', '-')}")
         print(f"  Match Rate: {len(matched)}/{total} ({match_pct:.1f}%)")
         print(f"  Report saved: {report_path}")
         print()

@@ -1,151 +1,125 @@
 <script lang="ts">
 	let {
-		label = 'DATA_DISK.TXT',
+		label = 'Document',
+		hint = 'TXT, PDF or DOCX',
 		accept = '.txt,.pdf,.docx',
-		onFile,
-		style = ''
+		file = $bindable<File | null>(null),
+		onFile
 	}: {
 		label?: string;
+		hint?: string;
 		accept?: string;
-		onFile: (file: File) => void;
-		style?: string;
+		file?: File | null;
+		onFile?: (file: File) => void;
 	} = $props();
 
-	let file = $state<File | null>(null);
 	let dragOver = $state(false);
-	const inputId = `file-${label.replace(/\s+/g, '-').toLowerCase()}`;
+	const inputId = $derived(`file-${label.replace(/\s+/g, '-').toLowerCase()}`);
 
-	function handleDrop(e: DragEvent) {
+	function set(f: File | undefined) {
+		if (f) {
+			file = f;
+			onFile?.(f);
+		}
+	}
+	function onDrop(e: DragEvent) {
 		e.preventDefault();
 		dragOver = false;
-		const f = e.dataTransfer?.files?.[0];
-		if (f) { file = f; onFile(f); }
+		set(e.dataTransfer?.files?.[0]);
 	}
-
-	function handleDragOver(e: DragEvent) {
-		e.preventDefault();
-		dragOver = true;
+	function onPick(e: Event) {
+		set((e.target as HTMLInputElement).files?.[0]);
 	}
-
-	function handleDragLeave() { dragOver = false; }
-
-	function handleFilePick(e: Event) {
-		const input = e.target as HTMLInputElement;
-		const f = input.files?.[0];
-		if (f) { file = f; onFile(f); }
-	}
-
-	function handleClick() {
+	function open() {
 		document.getElementById(inputId)?.click();
 	}
-
-	function handleKeydown(e: KeyboardEvent) {
+	function onKey(e: KeyboardEvent) {
 		if (e.key === 'Enter' || e.key === ' ') {
 			e.preventDefault();
-			handleClick();
+			open();
 		}
 	}
 </script>
 
 <div
-	class="drop-zone {file ? 'has-file' : ''} {dragOver ? 'drag-over' : ''}"
+	class="drop"
+	class:has={file}
+	class:over={dragOver}
 	role="button"
 	tabindex="0"
-	onclick={handleClick}
-	ondragover={handleDragOver}
-	ondragleave={handleDragLeave}
-	ondrop={handleDrop}
-	onkeydown={handleKeydown}
-	style={style}
+	aria-label="{label}: choose a file"
+	onclick={open}
+	onkeydown={onKey}
+	ondragover={(e) => {
+		e.preventDefault();
+		dragOver = true;
+	}}
+	ondragleave={() => (dragOver = false)}
+	ondrop={onDrop}
 >
-	<input
-		id={inputId}
-		type="file"
-		accept={accept}
-		class="hidden"
-		onchange={handleFilePick}
-	/>
+	<input id={inputId} type="file" {accept} class="sr" onchange={onPick} />
 
-	<div class="bracket-tl"></div><div class="bracket-tr"></div>
-	<div class="bracket-bl"></div><div class="bracket-br"></div>
-
-	<div class="inner-content">
-		{#if file}
-			<div><span class="prompt"></span> {label}</div>
-			<div class="file-name">> {file.name.toUpperCase()}</div>
-			<div class="text-dim">  SIZE: {(file.size / 1024).toFixed(1)} KB</div>
-			<div class="text-dim">  STATUS: LOADED [OK]</div>
-			<br/>
-			<div class="text-dim">  [ CLICK TO REPLACE ]</div>
-		{:else}
-			<div><span class="prompt"></span> {label}</div>
-			<div class="text-dim">  STATUS: AWAITING INPUT...</div>
-			<div class="text-dim">  FORMATS: TXT, PDF, DOCX</div>
-			<br/>
-			<div class="blink-text">  [ CLICK OR DRAG TO INSERT ]</div>
-		{/if}
+	<div class="top">
+		<span class="label">{label}</span>
+		{#if file}<span class="ok">✓ Loaded</span>{/if}
 	</div>
+
+	{#if file}
+		<div class="file">
+			<span class="fname">{file.name}</span>
+			<span class="fsize">{(file.size / 1024).toFixed(1)} KB · click to replace</span>
+		</div>
+	{:else}
+		<div class="empty">
+			<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M12 16V4M12 4l-4 4M12 4l4 4" />
+				<path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+			</svg>
+			<span class="cta">Drop file or <u>browse</u></span>
+			<span class="hint">{hint}</span>
+		</div>
+	{/if}
 </div>
 
 <style>
-	.drop-zone {
+	.drop {
 		position: relative;
-		padding: 24px;
+		display: flex;
+		flex-direction: column;
+		gap: 0.7rem;
+		padding: 1.5rem;
+		min-height: 168px;
+		border: 1.5px dashed var(--line-strong);
+		border-radius: var(--radius);
+		background: var(--card);
 		cursor: pointer;
-		min-height: 180px;
-		background: rgba(0, 0, 0, 0.4);
-		transition: background 0.2s;
+		transition: border-color 0.2s, background 0.2s, transform 0.15s;
 	}
+	.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+	.drop.over { transform: scale(1.01); }
+	.drop.has { border-style: solid; border-color: var(--line-strong); background: var(--card); }
+	.drop:focus-visible { outline: none; box-shadow: 0 0 0 3px var(--accent-ring); }
+	.sr { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
-	.drop-zone:hover, .drop-zone.drag-over {
-		background: rgba(57, 255, 20, 0.1);
+	.top { display: flex; align-items: center; justify-content: space-between; }
+	.label { font-weight: 700; font-size: 0.95rem; }
+	.ok { font-family: var(--font-mono); font-size: 0.72rem; color: var(--good); }
+
+	.empty {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		gap: 0.45rem;
+		color: var(--ink-mute);
+		text-align: center;
 	}
+	.cta { font-weight: 500; color: var(--ink-soft); font-size: 0.92rem; }
+	.cta u { color: var(--accent); text-decoration-thickness: 2px; text-underline-offset: 2px; }
+	.hint { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.05em; }
 
-	.drop-zone.has-file {
-		background: rgba(0, 0, 0, 0.8);
-	}
-
-	.hidden {
-		display: none;
-	}
-
-	.inner-content {
-		position: relative;
-		z-index: 2;
-	}
-
-	.file-name {
-		color: var(--phosphor-primary);
-		text-shadow: 0 0 8px var(--phosphor-primary);
-	}
-
-	.blink-text {
-		animation: blink 2s step-end infinite;
-	}
-
-	/* Corner Brackets */
-	.bracket-tl, .bracket-tr, .bracket-bl, .bracket-br {
-		position: absolute;
-		width: 16px;
-		height: 16px;
-		border-color: var(--phosphor-dim);
-		border-style: solid;
-		transition: border-color 0.2s;
-	}
-
-	.drop-zone:hover .bracket-tl,
-	.drop-zone:hover .bracket-tr,
-	.drop-zone:hover .bracket-bl,
-	.drop-zone:hover .bracket-br,
-	.drop-zone.has-file .bracket-tl,
-	.drop-zone.has-file .bracket-tr,
-	.drop-zone.has-file .bracket-bl,
-	.drop-zone.has-file .bracket-br {
-		border-color: var(--phosphor-primary);
-	}
-
-	.bracket-tl { top: 0; left: 0; border-width: 2px 0 0 2px; }
-	.bracket-tr { top: 0; right: 0; border-width: 2px 2px 0 0; }
-	.bracket-bl { bottom: 0; left: 0; border-width: 0 0 2px 2px; }
-	.bracket-br { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+	.file { display: flex; flex-direction: column; gap: 0.25rem; justify-content: center; flex: 1; }
+	.fname { font-weight: 600; word-break: break-all; }
+	.fsize { font-family: var(--font-mono); font-size: 0.72rem; color: var(--ink-mute); }
 </style>

@@ -23,5 +23,5 @@ services:
     buildCommand: npm install && npm run build
     startCommand: node build
     envVars:
-      - key: VITE_API_BASE
-        sync: false          # set to your backend URL after first deploy
+      - key: PUBLIC_API_BASE
+        sync: false          # set to your backend URL after first deploy (read at runtime)

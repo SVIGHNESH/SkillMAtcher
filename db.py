@@ -15,6 +15,14 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
+# Columns added after the initial schema. Applied idempotently on init so
+# existing databases pick them up without a destructive migration.
+_EXTRA_COLUMNS = {
+    "categories": "TEXT NOT NULL DEFAULT '{}'",
+    "recommendations": "TEXT NOT NULL DEFAULT '{}'",
+}
+
+
 def init_db() -> None:
     conn = get_conn()
     conn.execute(
@@ -29,10 +37,16 @@ def init_db() -> None:
             total_resume    INTEGER NOT NULL,
             match_rate      REAL NOT NULL,
             report_filename TEXT NOT NULL,
+            categories      TEXT NOT NULL DEFAULT '{}',
+            recommendations TEXT NOT NULL DEFAULT '{}',
             created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
         """
     )
+    existing = {row["name"] for row in conn.execute("PRAGMA table_info(matches)")}
+    for col, ddl in _EXTRA_COLUMNS.items():
+        if col not in existing:
+            conn.execute(f"ALTER TABLE matches ADD COLUMN {col} {ddl}")
     conn.commit()
     conn.close()
 
@@ -43,6 +57,8 @@ def save_match(
     matched: list[str],
     missing: list[str],
     report_filename: str,
+    categories: dict | None = None,
+    recommendations: dict | None = None,
 ) -> int:
     conn = get_conn()
     total = len(matched) + len(missing)
@@ -51,8 +67,9 @@ def save_match(
         """
         INSERT INTO matches (jd_filename, resume_filename, matched_skills,
                              missing_skills, total_jd, total_resume,
-                             match_rate, report_filename)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                             match_rate, report_filename, categories,
+                             recommendations)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             jd_filename,
@@ -63,6 +80,8 @@ def save_match(
             len(matched),
             round(match_rate, 1),
             report_filename,
+            json.dumps(categories or {}),
+            json.dumps(recommendations or {}),
         ),
     )
     conn.commit()
@@ -103,4 +122,6 @@ def _row_to_dict(row: sqlite3.Row) -> dict:
     d = dict(row)
     d["matched_skills"] = json.loads(d["matched_skills"])
     d["missing_skills"] = json.loads(d["missing_skills"])
+    d["categories"] = json.loads(d.get("categories") or "{}")
+    d["recommendations"] = json.loads(d.get("recommendations") or "{}")
     return d

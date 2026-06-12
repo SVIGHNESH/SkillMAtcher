@@ -26,193 +26,117 @@
 		}
 	}
 
-	function rateColor(r: number): string {
-		if (r >= 70) return 'var(--success)';
-		if (r >= 40) return 'var(--warning)';
-		return 'var(--error)';
+	function tone(r: number) {
+		return r >= 70 ? 'good' : r >= 40 ? 'mid' : 'bad';
+	}
+	function when(s: string) {
+		const d = new Date(s.includes('Z') || s.includes('T') ? s : s.replace(' ', 'T') + 'Z');
+		return isNaN(d.getTime()) ? s : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
 	}
 </script>
 
-<div class="page-content">
-	<section class="hero-mini animate-in">
-		<div class="prompt">match history / log</div>
-		<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:0.75rem;">
-			<h1>session records</h1>
-			<a href="/" class="btn-primary" style="padding:0.45rem 1.1rem; font-size:0.78rem;">
-				&#x21B1; new match
-			</a>
-		</div>
-	</section>
+<svelte:head><title>History · Signal</title></svelte:head>
 
-	<section class="animate-in" style="animation-delay:0.08s;">
-		{#if loading}
-			<div class="card status-line" style="text-align:center; color:var(--text-muted);">
-				<span class="highlight">loading</span> fetching records...
-			</div>
-		{:else if error}
-			<div class="card" style="border-color:var(--error-glow); text-align:center;">
-				<div class="status-line">
-					<span class="error-text">[!] {error}</span>
+<section class="head rise">
+	<div>
+		<span class="eyebrow">Saved analyses</span>
+		<h1>Match history</h1>
+	</div>
+	<a href="/" class="btn btn-primary btn-sm">New match</a>
+</section>
+
+{#if loading}
+	<div class="card pad center muted rise">Loading saved matches…</div>
+{:else if error}
+	<div class="card pad center rise err">
+		<strong>{error}</strong>
+		<p>Is the API running on port 8000?</p>
+	</div>
+{:else if items.length === 0}
+	<div class="card pad center muted rise">
+		No matches yet. <a href="/">Run your first match →</a>
+	</div>
+{:else}
+	<div class="grid">
+		{#each items as item, i}
+			<article class="card item rise" style="animation-delay:{Math.min(i * 0.04, 0.5)}s;">
+				<div class="ring {tone(item.match_rate)}">
+					<span>{item.match_rate.toFixed(0)}<small>%</small></span>
 				</div>
-				<div class="status-line" style="margin-top:0.5rem; font-size:0.72rem; color:var(--text-muted);">
-					is the backend running on port 8000?
-				</div>
-			</div>
-		{:else if items.length === 0}
-			<div class="card status-line" style="text-align:center;">
-				no records found.
-				<a href="/" class="highlight" style="margin-left:0.3rem;">run your first match</a>
-			</div>
-		{:else}
-			<div class="log-list">
-				{#each items as item, i}
-					<div class="log-entry animate-in-fast" style="animation-delay: {i * 0.04}s;">
-						<div class="log-meta">
-							<span class="log-rate" style="color:{rateColor(item.match_rate)};">
-								{item.match_rate.toFixed(0)}%
-							</span>
-							<span class="log-id">#{item.id}</span>
-						</div>
-						<div class="log-body">
-							<div class="log-files">
-								<span class="log-file highlight">{item.jd_filename}</span>
-								<span class="log-vs">vs</span>
-								<span class="log-file">{item.resume_filename}</span>
-							</div>
-							<div class="log-stats status-line" style="font-size:0.7rem;">
-								{item.matched_skills.length} matched &bull;
-								{item.missing_skills.length} missing &bull;
-								{item.created_at}
-							</div>
-						</div>
-						<div class="log-actions">
-							<a href={getReportUrl(item.report_filename)} download class="btn-secondary" style="padding:0.3rem 0.75rem; font-size:0.7rem;">
-								&#x2193; report
-							</a>
-							<button onclick={() => handleDelete(item.id)} class="btn-secondary btn-danger" style="padding:0.3rem 0.75rem; font-size:0.7rem;">
-								&#x2715;
-							</button>
-						</div>
+				<div class="body">
+					<a class="files" href="/result/{item.id}">
+						<span class="jd">{item.jd_filename}</span>
+						<span class="vs">vs {item.resume_filename}</span>
+					</a>
+					<div class="meta">
+						<span class="good">{item.matched_skills.length} matched</span>
+						<span class="bad">{item.missing_skills.length} missing</span>
+						<span class="time">{when(item.created_at)}</span>
 					</div>
-				{/each}
-			</div>
-		{/if}
-	</section>
-</div>
+				</div>
+				<div class="acts">
+					<a class="btn btn-ghost btn-sm" href="/result/{item.id}">View</a>
+					<a class="btn btn-ghost btn-sm" href={getReportUrl(item.report_filename, 'txt')} download aria-label="Download report">↓</a>
+					<button class="btn btn-ghost btn-sm danger" onclick={() => handleDelete(item.id)} aria-label="Delete">✕</button>
+				</div>
+			</article>
+		{/each}
+	</div>
+{/if}
 
 <style>
-	.page-content {
-		display: flex;
-		flex-direction: column;
-		gap: 1.5rem;
-	}
+	.head { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+	.head h1 { font-size: 2rem; margin-top: 0.3rem; }
 
-	.hero-mini {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
+	.pad { padding: 1.6rem; }
+	.center { text-align: center; }
+	.muted { color: var(--ink-mute); }
+	.err strong { color: var(--bad); display: block; }
+	.err p { color: var(--ink-soft); margin-top: 0.3rem; }
 
-	.hero-mini h1 {
-		font-family: var(--font-heading);
-		font-size: 1.5rem;
-		font-weight: 600;
-		text-transform: lowercase;
-		letter-spacing: 0.03em;
-	}
-
-	.log-list {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-	}
-
-	.log-entry {
+	.grid { display: flex; flex-direction: column; gap: 0.75rem; }
+	.item {
 		display: flex;
 		align-items: center;
-		gap: 1rem;
-		padding: 0.9rem 1.25rem;
-		background: var(--bg-card);
-		border: 1px solid var(--border);
-		border-radius: var(--radius);
-		transition: all 0.2s;
+		gap: 1.25rem;
+		padding: 1rem 1.25rem;
+		transition: border-color 0.2s, box-shadow 0.2s, transform 0.12s;
 	}
+	.item:hover { border-color: var(--line-strong); box-shadow: var(--shadow-md); transform: translateY(-1px); }
 
-	.log-entry:hover {
-		border-color: var(--border-active);
-		background: var(--bg-card-hover);
+	.ring {
+		flex-shrink: 0;
+		width: 56px;
+		height: 56px;
+		display: grid;
+		place-items: center;
+		border-radius: 99px;
+		font-family: var(--font-display);
+		font-weight: 800;
+		font-size: 1.05rem;
+		font-variant-numeric: tabular-nums;
+		border: 2px solid currentColor;
 	}
+	.ring small { font-size: 0.65rem; }
+	.ring.good { color: var(--good); background: var(--good-soft); }
+	.ring.mid { color: var(--mid); background: var(--mid-soft); }
+	.ring.bad { color: var(--bad); background: var(--bad-soft); }
 
-	.log-meta {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.15rem;
-		min-width: 52px;
-	}
+	.body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+	.files { display: flex; flex-direction: column; color: var(--ink); }
+	.files:hover .jd { color: var(--accent); }
+	.jd { font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.vs { font-size: 0.82rem; color: var(--ink-mute); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+	.meta { display: flex; flex-wrap: wrap; gap: 0.9rem; font-family: var(--font-mono); font-size: 0.72rem; }
+	.meta .good { color: var(--good); }
+	.meta .bad { color: var(--bad); }
+	.meta .time { color: var(--ink-mute); }
 
-	.log-rate {
-		font-family: var(--font-heading);
-		font-size: 1.15rem;
-		font-weight: 700;
-		line-height: 1;
-	}
+	.acts { display: flex; gap: 0.35rem; flex-shrink: 0; }
+	.acts .danger:hover { color: var(--bad); border-color: var(--bad); }
 
-	.log-id {
-		font-family: var(--font-mono);
-		font-size: 0.6rem;
-		color: var(--text-dim);
-	}
-
-	.log-body {
-		flex: 1;
-		min-width: 0;
-	}
-
-	.log-files {
-		display: flex;
-		align-items: center;
-		gap: 0.5rem;
-		font-family: var(--font-mono);
-		font-size: 0.82rem;
-		flex-wrap: wrap;
-	}
-
-	.log-file {
-		color: var(--text-primary);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		max-width: 180px;
-	}
-
-	.log-vs {
-		color: var(--text-dim);
-		font-size: 0.7rem;
-	}
-
-	.log-stats {
-		margin-top: 0.2rem;
-	}
-
-	.log-actions {
-		display: flex;
-		gap: 0.4rem;
-		shrink: 0;
-	}
-
-	@media (max-width: 640px) {
-		.log-entry {
-			flex-direction: column;
-			align-items: flex-start;
-			gap: 0.6rem;
-		}
-		.log-meta {
-			flex-direction: row;
-			gap: 0.5rem;
-		}
-		.log-actions {
-			align-self: flex-end;
-		}
+	@media (max-width: 600px) {
+		.item { flex-wrap: wrap; }
+		.acts { width: 100%; justify-content: flex-end; }
 	}
 </style>

@@ -2,11 +2,24 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
+		<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%23166E63'/%3E%3Cpath d='M9 17.5l4.5 4.5L23 11' stroke='%23FAF8F4' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>ROBCO INDUSTRIES - SKILLMATCHER UOS</title>
+		<meta name="description" content="Signal — AI skill-gap analysis between a job description and a resume." />
+		<title>Signal — Skill Match Intelligence</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet" />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<script>
+			// Apply saved theme before first paint to avoid a flash.
+			try {
+				const t = localStorage.getItem('signal-theme');
+				if (t === 'dark' || (!t && matchMedia('(prefers-color-scheme: dark)').matches))
+					document.documentElement.setAttribute('data-theme', 'dark');
+			} catch (e) {}
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

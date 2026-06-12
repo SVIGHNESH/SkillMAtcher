@@ -3,6 +3,7 @@ import logging
 
 from openai import OpenAI
 
+import cache
 from config import LLM_API_KEY, LLM_BASE_URL, LLM_MODEL
 
 logger = logging.getLogger(__name__)
@@ -38,20 +39,25 @@ def match_skills(
     if not resume_skills:
         return [], list(jd_skills)
 
-    client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
-    prompt = MATCHING_PROMPT.format(
-        jd_skills=json.dumps(jd_skills),
-        resume_skills=json.dumps(resume_skills),
-    )
+    def _compute() -> dict:
+        client = OpenAI(api_key=LLM_API_KEY, base_url=LLM_BASE_URL)
+        prompt = MATCHING_PROMPT.format(
+            jd_skills=json.dumps(jd_skills),
+            resume_skills=json.dumps(resume_skills),
+        )
+        response = client.chat.completions.create(
+            model=LLM_MODEL,
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.1,
+            response_format={"type": "json_object"},
+        )
+        content = response.choices[0].message.content.strip()
+        matched, missing = _parse_match_result(content, jd_skills)
+        return {"matched": matched, "missing": missing}
 
-    response = client.chat.completions.create(
-        model=LLM_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.1,
-    )
-
-    content = response.choices[0].message.content.strip()
-    return _parse_match_result(content, jd_skills)
+    payload = json.dumps({"jd": jd_skills, "resume": resume_skills}, sort_keys=True)
+    result = cache.get_or_compute("match", payload, _compute)
+    return result["matched"], result["missing"]
 
 
 def _parse_match_result(
@@ -67,7 +73,6 @@ def _parse_match_result(
         missing = [str(s).strip() for s in data.get("missing", []) if s]
         return matched, missing
     except (json.JSONDecodeError, KeyError):
-        logger.warning(
-            "Failed to parse match result as JSON: %s", raw[:200]
-        )
-        return list(jd_skills), []
+        logger.warning("Failed to parse match result as JSON: %s", raw[:200])
+        # Safer to treat everything as missing than to claim unverified matches.
+        return [], list(jd_skills)
