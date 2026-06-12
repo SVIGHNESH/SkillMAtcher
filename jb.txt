@@ -1,0 +1,26 @@
+bout the job
+
+Job Description:
+
+
+Design, develop, and maintenance of applications using Java and React/Angular
+
+.Java, Spring Boot, ReactJS, REST APIs, Oracle/MongoDB, HTML, CSS, JavaScript, CI/CD tools, and Git
+
+
+.
+
+Roles & Responsibility:
+
+
+    Design, develop, and implement high-quality, scalable applications using Java and related frameworks (e.g., Spring, Hibernate, microservices.
+    Design and maintain Oracle databases, including schema design, data modeling, and data migration. Write clean, efficient Java code and optimize complex SQL queries and PL/SQL stored procedures for maximum performance.
+    Work closely with cross-functional teams, including business analysts, front-end developers, and project managers, to gather requirements and define application objectives.
+    Utilize JDBC drivers (including OCI) for robust interaction between Java applications and Oracle Databases, React.
+    Create and maintain stored procedures, triggers, views, and complex queries using Oracle SQL and PL/SQL.
+    Perform database tuning, optimization, and SQL performance tuning to maximize application. 
+    Conduct unit testing, debug applications, and resolve technical issues related to both the Java code and the Oracle database
+    Create and maintain technical documentation and user guides for software and processes and Create technical documentation for code changes and system specifications.
+    Maintain and update existing systems and applications, suggesting changes to the existing infrastructure for continuous improvement.
+
+

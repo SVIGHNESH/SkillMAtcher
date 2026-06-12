@@ -1,0 +1,12 @@
+[project]
+name = "skillmatcher"
+version = "0.1.0"
+description = "LLM-powered Job Description vs Resume skill matcher"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "openai>=1.0.0",
+    "python-docx>=1.1.0",
+    "PyMuPDF>=1.24.0",
+    "python-dotenv>=1.0.0",
+]
